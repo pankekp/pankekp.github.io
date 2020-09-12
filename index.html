@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>碎碎念回收站</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.74.3" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.4fc0b62e4b82c997bb0041217cd6b979.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+
+    
+
+    
+    
+      <link href="/index.xml" rel="alternate" type="application/rss+xml" title="碎碎念回收站" />
+      <link href="/index.xml" rel="feed" type="application/rss+xml" title="碎碎念回收站" />
+      
+    
+    
+    <meta property="og:title" content="碎碎念回收站" />
+<meta property="og:description" content="" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="http://example.org/" />
+<meta property="og:updated_time" content="2019-09-30T00:00:00+00:00" />
+<meta itemprop="name" content="碎碎念回收站">
+<meta itemprop="description" content="">
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="碎碎念回收站"/>
+<meta name="twitter:description" content=""/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+
+  <header>
+    <div class="pb3-m pb6-l bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        碎碎念回收站
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+      <div class="tc-l pv3 ph3 ph4-ns">
+        <h1 class="f2 f-subheadline-l fw2 light-silver mb0 lh-title">
+          碎碎念回收站
+        </h1>
+        
+      </div>
+    </div>
+  </header>
+
+
+    <main class="pb7" role="main">
+      
+  <article class="cf ph3 ph5-l pv3 pv4-l f4 tc-l center measure-wide lh-copy mid-gray">
+    
+  </article>
+  
+  
+  
+  
+  
+  
+  
+    
+    
+
+    <div class="pa3 pa4-ns w-100 w-70-ns center">
+      
+       
+          <h1 class="flex-none">
+            Recent Posts
+          </h1>
+        
+
+      
+
+      <section class="w-100 mw8">
+        
+        
+          <div class="relative w-100 mb4">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l no-underline dark-gray">
+    <div class="flex flex-column flex-row-ns">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="http://example.org/posts/aqs/" class="color-inherit dim link">
+            【源码学习】AQS 独占模式
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          认识 AbstractQueuedSynchronizer 是一个抽象类，它封装了各种同步机制的底层细节，显式锁 ReentrantLock 就是基于 AQS 实现的。它也可以用来定义自己的同步工具，只需要继承这个类并重写一些它的方法即可。
+synchronized 是被封装在 JVM 中的，与操作系统相关，并非由 JDK 实现，而 AQS 则完全是由 Java 代码实现，比其他使用系统底层的实现不知道高到哪里去了。
+独占模式 &amp; 共享模式 AQS 中维护了一个 state 属性，由 volatile 修饰，用来表示线程的同步状态，关于这个属性的几个方法都是 protected 和 final 的，也就是说只能在子类中使用而且不允许被重写。通过设置 state 属性来实现多线程的独占模式或共享模式：
+独占模式：
+ state 初始值为 0 线程需要进行独占操作前判断 state：  如果是 0，则将 state 置 1，该线程进行操作。先判断再操作的过程使用的就是 CAS 机制 如果是 1，就表示其他线程正在进行独占操作，本线程阻塞   获取独占状态成功的线程执行完毕后需要释放同步状态，将 state 置 0  共享模式：
+ 与独占模式类似，state 的值表示允许存在这么多个线程同时执行 每一个进入共享模式的线程将 state 减 1 如果 state 的值不大于 0 则该线程需要阻塞等待 释放同步状态则将 state 加 1  JDK 下竞争同步状态的实现 基于同步状态，就可以将「获取同步状态」和「释放同步状态」这两种操作进行抽取，以这两种操作为基础，就可以定义各种并发工具。
+        </div>
+          <a href="http://example.org/posts/aqs/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+          <div class="relative w-100 mb4">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l no-underline dark-gray">
+    <div class="flex flex-column flex-row-ns">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="http://example.org/posts/compile/" class="color-inherit dim link">
+            【Java 基础】使用命令编译简单的 Java 项目
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          CLASSPATH classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。
+JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。
+如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。
+项目结构  src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口 target：编译后 class 文件的位置 lib：Test 中引入的第三方 jar 包 resource：第三方 jar 包需要的配置文件  Hello.java
+package hello; public class Hello{ public void hello(){ System.out.println(&#34;hello&#34;); } } Hi.java
+package hi; public class Hi{ public void hi(){ System.out.println(&#34;hi&#34;); } } Test.java
+package hi; import hello.*; import org.slf4j.*; public class Test{ private static Logger logger = LoggerFactory.
+        </div>
+          <a href="http://example.org/posts/compile/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+          <div class="relative w-100 mb4">
+            
+<article class="bb b--black-10">
+  <div class="db pv4 ph3 ph0-l no-underline dark-gray">
+    <div class="flex flex-column flex-row-ns">
+      
+      <div class="blah w-100">
+        <h1 class="f3 fw1 athelas mt0 lh-title">
+          <a href="http://example.org/posts/cocurrenthashmap_2/" class="color-inherit dim link">
+            【源码学习】JDK8 ConcurrentHashMap
+            </a>
+        </h1>
+        <div class="f6 f5-l lh-copy nested-copy-line-height nested-links">
+          认识 与 JDK7 相比舍弃了复杂的分段锁机制，所有的并发安全均由synchronized 与 CAS 机制保证，在存储结构上延续了 JDK8 HashMap 的「链表 + 红黑树」的结构。
+关键属性 // 最大容量 private static final int MAXIMUM_CAPACITY = 1 &lt;&lt; 30; // 默认容量，与hashmap相同 private static final int DEFAULT_CAPACITY = 16; // 默认并发等级 private static final int DEFAULT_CONCURRENCY_LEVEL = 16; // 扩容因子，不再赘述 private static final float LOAD_FACTOR = 0.75f; // 链表转化为红黑树的阈值 static final int TREEIFY_THRESHOLD = 8; // 红黑树最小容量 static final int MIN_TREEIFY_CAPACITY = 64; // 重要属性，扩容校验码位数，详见后文 private static int RESIZE_STAMP_BITS = 16; // 参与扩容的最大线程数 private static final int MAX_RESIZERS = (1 &lt;&lt; (32 - RESIZE_STAMP_BITS)) - 1; // 扩容校验码移位数，详见后文 private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS; // 重要属性，表示此节点正在扩容中，hash值为-1 static final int MOVED = -1; // hash for forwarding nodes  // node数组 transient volatile Node&lt;K,V&gt;[] table; // 扩容后的数组 private transient volatile Node&lt;K,V&gt;[] nextTable; // 十分重要的属性，详解后文 private transient volatile int sizeCtl; // 重要属性，并发扩容索引，详见后文 private transient volatile int transferIndex; sizeCtl 是保证并发安全最重要一个属性，被标记为 volitale，以CAS 方式来对其设值。不同状态下此属性不同的值有不同的意义，在此处先一并列出，便于后文参考：
+        </div>
+          <a href="http://example.org/posts/cocurrenthashmap_2/" class="ba b--moon-gray bg-light-gray br2 color-inherit dib f7 hover-bg-moon-gray link mt2 ph2 pv1">read more</a>
+        
+      </div>
+    </div>
+  </div>
+</article>
+
+          </div>
+        
+      </section>
+
+      
+      <section class="w-100">
+        <h1 class="f3">More</h1>
+        
+        
+          <h2 class="f5 fw4 mb4 dib mr3">
+            <a href="http://example.org/posts/hashmap_2/" class="link black dim">
+              【源码学习】JDK8 HashMap
+            </a>
+          </h2>
+        
+          <h2 class="f5 fw4 mb4 dib mr3">
+            <a href="http://example.org/posts/cocurrenthashmap_1/" class="link black dim">
+              【源码学习】JDK7 ConcurrentHashMap
+            </a>
+          </h2>
+        
+          <h2 class="f5 fw4 mb4 dib mr3">
+            <a href="http://example.org/posts/hashmap_1/" class="link black dim">
+              【源码学习】JDK7 HashMap
+            </a>
+          </h2>
+        
+
+        
+        
+          <a href="http://example.org/posts/" class="link db f6 pa2 br3 bg-mid-gray white dim w4 tc">All Posts</a>
+        
+        </section>
+      
+
+      </div>
+  
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy;  碎碎念回收站 2020 
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

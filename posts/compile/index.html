@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>【Java 基础】使用命令编译简单的 Java 项目 | 碎碎念回收站</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.74.3" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.4fc0b62e4b82c997bb0041217cd6b979.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+
+    
+
+    
+    
+    <meta property="og:title" content="【Java 基础】使用命令编译简单的 Java 项目" />
+<meta property="og:description" content="CLASSPATH classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。
+JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。
+如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。
+项目结构  src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口 target：编译后 class 文件的位置 lib：Test 中引入的第三方 jar 包 resource：第三方 jar 包需要的配置文件  Hello.java
+package hello; public class Hello{ public void hello(){ System.out.println(&#34;hello&#34;); } } Hi.java
+package hi; public class Hi{ public void hi(){ System.out.println(&#34;hi&#34;); } } Test.java
+package hi; import hello.*; import org.slf4j.*; public class Test{ private static Logger logger = LoggerFactory." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/compile/" />
+<meta property="article:published_time" content="2019-08-18T00:00:00+00:00" />
+<meta property="article:modified_time" content="2019-08-18T00:00:00+00:00" />
+<meta itemprop="name" content="【Java 基础】使用命令编译简单的 Java 项目">
+<meta itemprop="description" content="CLASSPATH classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。
+JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。
+如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。
+项目结构  src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口 target：编译后 class 文件的位置 lib：Test 中引入的第三方 jar 包 resource：第三方 jar 包需要的配置文件  Hello.java
+package hello; public class Hello{ public void hello(){ System.out.println(&#34;hello&#34;); } } Hi.java
+package hi; public class Hi{ public void hi(){ System.out.println(&#34;hi&#34;); } } Test.java
+package hi; import hello.*; import org.slf4j.*; public class Test{ private static Logger logger = LoggerFactory.">
+<meta itemprop="datePublished" content="2019-08-18T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2019-08-18T00:00:00+00:00" />
+<meta itemprop="wordCount" content="209">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="【Java 基础】使用命令编译简单的 Java 项目"/>
+<meta name="twitter:description" content="CLASSPATH classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。
+JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。
+如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。
+项目结构  src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口 target：编译后 class 文件的位置 lib：Test 中引入的第三方 jar 包 resource：第三方 jar 包需要的配置文件  Hello.java
+package hello; public class Hello{ public void hello(){ System.out.println(&#34;hello&#34;); } } Hi.java
+package hi; public class Hi{ public void hi(){ System.out.println(&#34;hi&#34;); } } Test.java
+package hi; import hello.*; import org.slf4j.*; public class Test{ private static Logger logger = LoggerFactory."/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        碎碎念回收站
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        POSTS
+      </aside>
+      
+
+
+
+
+  <div id="sharing" class="mt3">
+
+    
+    <a href="https://www.facebook.com/sharer.php?u=http://example.org/posts/compile/" class="facebook no-underline" aria-label="share on Facebook">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M28.765,50.32h6.744V33.998h4.499l0.596-5.624h-5.095  l0.007-2.816c0-1.466,0.14-2.253,2.244-2.253h2.812V17.68h-4.5c-5.405,0-7.307,2.729-7.307,7.317v3.377h-3.369v5.625h3.369V50.32z   M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;"/></svg>
+
+    </a>
+
+    
+    
+    <a href="https://twitter.com/share?url=http://example.org/posts/compile/&amp;text=%e3%80%90Java%20%e5%9f%ba%e7%a1%80%e3%80%91%e4%bd%bf%e7%94%a8%e5%91%bd%e4%bb%a4%e7%bc%96%e8%af%91%e7%ae%80%e5%8d%95%e7%9a%84%20Java%20%e9%a1%b9%e7%9b%ae" class="twitter no-underline" aria-label="share on Twitter">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M37.167,22.283c-2.619,0.953-4.274,3.411-4.086,6.101  l0.063,1.038l-1.048-0.127c-3.813-0.487-7.145-2.139-9.974-4.915l-1.383-1.377l-0.356,1.017c-0.754,2.267-0.272,4.661,1.299,6.271  c0.838,0.89,0.649,1.017-0.796,0.487c-0.503-0.169-0.943-0.296-0.985-0.233c-0.146,0.149,0.356,2.076,0.754,2.839  c0.545,1.06,1.655,2.097,2.871,2.712l1.027,0.487l-1.215,0.021c-1.173,0-1.215,0.021-1.089,0.467  c0.419,1.377,2.074,2.839,3.918,3.475l1.299,0.444l-1.131,0.678c-1.676,0.976-3.646,1.526-5.616,1.568  C19.775,43.256,19,43.341,19,43.405c0,0.211,2.557,1.397,4.044,1.864c4.463,1.377,9.765,0.783,13.746-1.568  c2.829-1.673,5.657-5,6.978-8.221c0.713-1.716,1.425-4.851,1.425-6.354c0-0.975,0.063-1.102,1.236-2.267  c0.692-0.678,1.341-1.419,1.467-1.631c0.21-0.403,0.188-0.403-0.88-0.043c-1.781,0.636-2.033,0.551-1.152-0.402  c0.649-0.678,1.425-1.907,1.425-2.267c0-0.063-0.314,0.042-0.671,0.233c-0.377,0.212-1.215,0.53-1.844,0.72l-1.131,0.361l-1.027-0.7  c-0.566-0.381-1.361-0.805-1.781-0.932C39.766,21.902,38.131,21.944,37.167,22.283z M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4  s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/></svg>
+
+    </a>
+
+    
+    <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http://example.org/posts/compile/&amp;title=%e3%80%90Java%20%e5%9f%ba%e7%a1%80%e3%80%91%e4%bd%bf%e7%94%a8%e5%91%bd%e4%bb%a4%e7%bc%96%e8%af%91%e7%ae%80%e5%8d%95%e7%9a%84%20Java%20%e9%a1%b9%e7%9b%ae" class="linkedin no-underline" aria-label="share on LinkedIn">
+      <svg  height="32px"  style="enable-background:new 0 0 65 65;" version="1.1" viewBox="0 0 65 65" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <path d="M50.837,48.137V36.425c0-6.275-3.35-9.195-7.816-9.195  c-3.604,0-5.219,1.983-6.119,3.374V27.71h-6.79c0.09,1.917,0,20.427,0,20.427h6.79V36.729c0-0.609,0.044-1.219,0.224-1.655  c0.49-1.22,1.607-2.483,3.482-2.483c2.458,0,3.44,1.873,3.44,4.618v10.929H50.837z M22.959,24.922c2.367,0,3.842-1.57,3.842-3.531  c-0.044-2.003-1.475-3.528-3.797-3.528s-3.841,1.524-3.841,3.528c0,1.961,1.474,3.531,3.753,3.531H22.959z M34,64  C17.432,64,4,50.568,4,34C4,17.431,17.432,4,34,4s30,13.431,30,30C64,50.568,50.568,64,34,64z M26.354,48.137V27.71h-6.789v20.427  H26.354z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/>
+</svg>
+
+    </a>
+  </div>
+
+
+      <h1 class="f1 athelas mt3 mb1">【Java 基础】使用命令编译简单的 Java 项目</h1>
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2019-08-18T00:00:00Z">August 18, 2019</time>
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l"><h2 id="classpath">CLASSPATH</h2>
+<p>classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。</p>
+<p>JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。</p>
+<p>如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。</p>
+<h2 id="项目结构">项目结构</h2>
+<p><img src="https://blog-pankekp-image.oss-cn-beijing.aliyuncs.com/2019-08/2019-08-18_source.png" alt="source structure"></p>
+<ul>
+<li>src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口</li>
+<li>target：编译后 class 文件的位置</li>
+<li>lib：Test 中引入的第三方 jar 包</li>
+<li>resource：第三方 jar 包需要的配置文件</li>
+</ul>
+<p>Hello.java</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> hello<span style="color:#f92672">;</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Hello</span><span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">hello</span><span style="color:#f92672">(){</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hello&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>Hi.java</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> hi<span style="color:#f92672">;</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Hi</span><span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">hi</span><span style="color:#f92672">(){</span>
+        System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;hi&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>Test.java</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#f92672">package</span> hi<span style="color:#f92672">;</span>
+
+<span style="color:#f92672">import</span> hello.*<span style="color:#f92672">;</span>
+<span style="color:#f92672">import</span> org.slf4j.*<span style="color:#f92672">;</span>
+
+<span style="color:#66d9ef">public</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Test</span><span style="color:#f92672">{</span>
+
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> Logger logger <span style="color:#f92672">=</span> LoggerFactory<span style="color:#f92672">.</span><span style="color:#a6e22e">getLogger</span><span style="color:#f92672">(</span>Test<span style="color:#f92672">.</span><span style="color:#a6e22e">class</span><span style="color:#f92672">);</span>
+
+    <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">){</span>
+
+        Hello hello <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Hello<span style="color:#f92672">();</span>
+        Hi hi <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Hi<span style="color:#f92672">();</span>
+        hello<span style="color:#f92672">.</span><span style="color:#a6e22e">hello</span><span style="color:#f92672">();</span>
+        hi<span style="color:#f92672">.</span><span style="color:#a6e22e">hi</span><span style="color:#f92672">();</span>
+        logger<span style="color:#f92672">.</span><span style="color:#a6e22e">info</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;This is slf4j&#34;</span><span style="color:#f92672">);</span>
+    <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>logback.xml</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-xml" data-lang="xml"><span style="color:#75715e">&lt;?xml version=&#34;1.0&#34; encoding=&#34;UTF-8&#34;?&gt;</span>
+<span style="color:#f92672">&lt;configuration&gt;</span>
+
+    <span style="color:#f92672">&lt;appender</span> <span style="color:#a6e22e">name=</span><span style="color:#e6db74">&#34;CONSOLE&#34;</span> <span style="color:#a6e22e">class=</span><span style="color:#e6db74">&#34;ch.qos.logback.core.ConsoleAppender&#34;</span><span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;encoder&gt;</span>
+            <span style="color:#f92672">&lt;pattern&gt;</span>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n<span style="color:#f92672">&lt;/pattern&gt;</span>
+        <span style="color:#f92672">&lt;/encoder&gt;</span>
+    <span style="color:#f92672">&lt;/appender&gt;</span>
+
+    <span style="color:#f92672">&lt;root</span> <span style="color:#a6e22e">level=</span><span style="color:#e6db74">&#34;INFO&#34;</span><span style="color:#f92672">&gt;</span>
+        <span style="color:#f92672">&lt;appender-ref</span> <span style="color:#a6e22e">ref=</span><span style="color:#e6db74">&#34;CONSOLE&#34;</span> <span style="color:#f92672">/&gt;</span>
+    <span style="color:#f92672">&lt;/root&gt;</span>
+
+<span style="color:#f92672">&lt;/configuration&gt;</span>
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"></code></pre></div><h2 id="编译">编译</h2>
+<p>Test.java 依赖 Hello.java、Hi.java 和 lib 中的 jar 包，先编译 Hello.java 和 Hi.java。</p>
+<p><strong>需要注意的是，编译和运行时的所有命令都是在当前目录下执行，也就是和 resource、lib 以及 hello 包、 hi 包同级</strong>。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">javac src/hello/hello.java -d target
+
+javac src/hi/hi.java -d target
+</code></pre></div><p>-d：指定编译后 class 文件的位置，这里指定为预先建立的 target 目录。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">javac -cp target:lib/logback-core-1.2.3.jar:lib/logback-classic-1.2.3.jar:lib/slf4j-api-1.7.26.jar src/hi/Test.java -d target
+</code></pre></div><p>-cp：指定了编译 Test.java 时需要的其他类的路径，这里指定了 target 和 lib 目录，多个路径使用:分隔，jar 包需要逐一指出。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">javac -cp lib/logback-core-1.2.3.jar:lib/logback-classic-1.2.3.jar:lib/slf4j-api-1.7.26.jar src/hello/Hello.java src/hi/Hi.java src/hi/Test.java -d target
+</code></pre></div><p>如果同时编译三个源文件，则不需要在 classpath 中添加 target 目录，只需要指定 Test.java 依赖的第三方 jar 包即可。三个源文件的顺序没有规定。</p>
+<p>编译后的项目结构如下图：</p>
+<p><img src="https://blog-pankekp-image.oss-cn-beijing.aliyuncs.com/2019-08/2019-08-18_compile.png" alt="compiled structure"></p>
+<h2 id="运行">运行</h2>
+<p>运行 Test.class：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">java -cp resource:target:lib/logback-classic-1.2.3.jar:lib/logback-core-1.2.3.jar:lib/slf4j-api-1.7.26.jar hi.Test
+</code></pre></div><p>运行时不仅需要指定 Test.class 所在的目录 target，还需要指定依赖的第三方 jar 包和其配置文件的位置。</p>
+<p>由于 target 目录也包含了 Hello.class 和 Hi.class，所以不需要明确指出这两个依赖项。</p>
+<p>Test.class 执行时需要添加包名。</p>
+<p>运行结果如下图：</p>
+<p><img src="https://blog-pankekp-image.oss-cn-beijing.aliyuncs.com/2019-08/2019-08-18_result.png" alt="result"></p>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy;  碎碎念回收站 2020 
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

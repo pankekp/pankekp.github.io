@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    
+    <title>【源码学习】JDK7 ConcurrentHashMap | 碎碎念回收站</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1">
+    <meta name="generator" content="Hugo 0.74.3" />
+    
+    
+      <META NAME="ROBOTS" CONTENT="NOINDEX, NOFOLLOW">
+    
+
+    
+    
+      <link href="/dist/css/app.4fc0b62e4b82c997bb0041217cd6b979.css" rel="stylesheet">
+    
+
+    
+
+    
+      
+
+    
+
+    
+    
+    <meta property="og:title" content="【源码学习】JDK7 ConcurrentHashMap" />
+<meta property="og:description" content="认识 HashMap 是采用「数组 &#43; 链表」的方式进行数据的存储，而在 ConcurrentHashMap 中则划分了若干个 Segment，每个 Segment 中存储一个散列表。ConcurrentHashMap 可以看作是一个具有二级结构的 HashMap。
+JDK7 的 HashMap 在并发情况下存在安全问题，虽然 HashTable 及 Collections.synchronizedMap(hashMap) 是线程安全的，但是这两种方式都是对整个 Map 加锁，在并发量大的情况下十分影响性能。ConcurrentHashMap 引入了分段锁机制，能够分别对每个 Segment 加锁，在并发读写情况下每个 Segment 互不影响。
+static class Segment&lt;K,V&gt; extends ReentrantLock implements Serializable { private static final long serialVersionUID = 2249069246763182397L; final float loadFactor; Segment(float lf) { this.loadFactor = lf; } } 可以看到，Segment 继承了 ReentrantLock，它本质上就是一个可重入锁，所以这种结构相比 HashMap 能够避免并发问题。
+关键成员属性 // 整个map的默认初始容量 static final int DEFAULT_INITIAL_CAPACITY = 16; // HashEntry数组的扩容因子 static final float DEFAULT_LOAD_FACTOR = 0." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/posts/cocurrenthashmap_1/" />
+<meta property="article:published_time" content="2018-06-04T00:00:00+00:00" />
+<meta property="article:modified_time" content="2018-06-04T00:00:00+00:00" />
+<meta itemprop="name" content="【源码学习】JDK7 ConcurrentHashMap">
+<meta itemprop="description" content="认识 HashMap 是采用「数组 &#43; 链表」的方式进行数据的存储，而在 ConcurrentHashMap 中则划分了若干个 Segment，每个 Segment 中存储一个散列表。ConcurrentHashMap 可以看作是一个具有二级结构的 HashMap。
+JDK7 的 HashMap 在并发情况下存在安全问题，虽然 HashTable 及 Collections.synchronizedMap(hashMap) 是线程安全的，但是这两种方式都是对整个 Map 加锁，在并发量大的情况下十分影响性能。ConcurrentHashMap 引入了分段锁机制，能够分别对每个 Segment 加锁，在并发读写情况下每个 Segment 互不影响。
+static class Segment&lt;K,V&gt; extends ReentrantLock implements Serializable { private static final long serialVersionUID = 2249069246763182397L; final float loadFactor; Segment(float lf) { this.loadFactor = lf; } } 可以看到，Segment 继承了 ReentrantLock，它本质上就是一个可重入锁，所以这种结构相比 HashMap 能够避免并发问题。
+关键成员属性 // 整个map的默认初始容量 static final int DEFAULT_INITIAL_CAPACITY = 16; // HashEntry数组的扩容因子 static final float DEFAULT_LOAD_FACTOR = 0.">
+<meta itemprop="datePublished" content="2018-06-04T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2018-06-04T00:00:00+00:00" />
+<meta itemprop="wordCount" content="1368">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="【源码学习】JDK7 ConcurrentHashMap"/>
+<meta name="twitter:description" content="认识 HashMap 是采用「数组 &#43; 链表」的方式进行数据的存储，而在 ConcurrentHashMap 中则划分了若干个 Segment，每个 Segment 中存储一个散列表。ConcurrentHashMap 可以看作是一个具有二级结构的 HashMap。
+JDK7 的 HashMap 在并发情况下存在安全问题，虽然 HashTable 及 Collections.synchronizedMap(hashMap) 是线程安全的，但是这两种方式都是对整个 Map 加锁，在并发量大的情况下十分影响性能。ConcurrentHashMap 引入了分段锁机制，能够分别对每个 Segment 加锁，在并发读写情况下每个 Segment 互不影响。
+static class Segment&lt;K,V&gt; extends ReentrantLock implements Serializable { private static final long serialVersionUID = 2249069246763182397L; final float loadFactor; Segment(float lf) { this.loadFactor = lf; } } 可以看到，Segment 继承了 ReentrantLock，它本质上就是一个可重入锁，所以这种结构相比 HashMap 能够避免并发问题。
+关键成员属性 // 整个map的默认初始容量 static final int DEFAULT_INITIAL_CAPACITY = 16; // HashEntry数组的扩容因子 static final float DEFAULT_LOAD_FACTOR = 0."/>
+
+	
+  </head>
+
+  <body class="ma0 avenir bg-near-white">
+
+    
+   
+  
+
+  <header>
+    <div class="bg-black">
+      <nav class="pv3 ph3 ph4-ns" role="navigation">
+  <div class="flex-l justify-between items-center center">
+    <a href="/" class="f3 fw2 hover-white no-underline white-90 dib">
+      
+        碎碎念回收站
+      
+    </a>
+    <div class="flex-l items-center">
+      
+
+      
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </div>
+  </div>
+</nav>
+
+    </div>
+  </header>
+
+
+
+    <main class="pb7" role="main">
+      
+  
+  <article class="flex-l flex-wrap justify-between mw8 center ph3">
+    <header class="mt4 w-100">
+      <aside class="instapaper_ignoref b helvetica tracked">
+          
+        POSTS
+      </aside>
+      
+
+
+
+
+  <div id="sharing" class="mt3">
+
+    
+    <a href="https://www.facebook.com/sharer.php?u=http://example.org/posts/cocurrenthashmap_1/" class="facebook no-underline" aria-label="share on Facebook">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M28.765,50.32h6.744V33.998h4.499l0.596-5.624h-5.095  l0.007-2.816c0-1.466,0.14-2.253,2.244-2.253h2.812V17.68h-4.5c-5.405,0-7.307,2.729-7.307,7.317v3.377h-3.369v5.625h3.369V50.32z   M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;"/></svg>
+
+    </a>
+
+    
+    
+    <a href="https://twitter.com/share?url=http://example.org/posts/cocurrenthashmap_1/&amp;text=%e3%80%90%e6%ba%90%e7%a0%81%e5%ad%a6%e4%b9%a0%e3%80%91JDK7%20ConcurrentHashMap" class="twitter no-underline" aria-label="share on Twitter">
+      <svg height="32px"  style="enable-background:new 0 0 67 67;" version="1.1" viewBox="0 0 67 67" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M37.167,22.283c-2.619,0.953-4.274,3.411-4.086,6.101  l0.063,1.038l-1.048-0.127c-3.813-0.487-7.145-2.139-9.974-4.915l-1.383-1.377l-0.356,1.017c-0.754,2.267-0.272,4.661,1.299,6.271  c0.838,0.89,0.649,1.017-0.796,0.487c-0.503-0.169-0.943-0.296-0.985-0.233c-0.146,0.149,0.356,2.076,0.754,2.839  c0.545,1.06,1.655,2.097,2.871,2.712l1.027,0.487l-1.215,0.021c-1.173,0-1.215,0.021-1.089,0.467  c0.419,1.377,2.074,2.839,3.918,3.475l1.299,0.444l-1.131,0.678c-1.676,0.976-3.646,1.526-5.616,1.568  C19.775,43.256,19,43.341,19,43.405c0,0.211,2.557,1.397,4.044,1.864c4.463,1.377,9.765,0.783,13.746-1.568  c2.829-1.673,5.657-5,6.978-8.221c0.713-1.716,1.425-4.851,1.425-6.354c0-0.975,0.063-1.102,1.236-2.267  c0.692-0.678,1.341-1.419,1.467-1.631c0.21-0.403,0.188-0.403-0.88-0.043c-1.781,0.636-2.033,0.551-1.152-0.402  c0.649-0.678,1.425-1.907,1.425-2.267c0-0.063-0.314,0.042-0.671,0.233c-0.377,0.212-1.215,0.53-1.844,0.72l-1.131,0.361l-1.027-0.7  c-0.566-0.381-1.361-0.805-1.781-0.932C39.766,21.902,38.131,21.944,37.167,22.283z M33,64C16.432,64,3,50.569,3,34S16.432,4,33,4  s30,13.431,30,30S49.568,64,33,64z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/></svg>
+
+    </a>
+
+    
+    <a href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http://example.org/posts/cocurrenthashmap_1/&amp;title=%e3%80%90%e6%ba%90%e7%a0%81%e5%ad%a6%e4%b9%a0%e3%80%91JDK7%20ConcurrentHashMap" class="linkedin no-underline" aria-label="share on LinkedIn">
+      <svg  height="32px"  style="enable-background:new 0 0 65 65;" version="1.1" viewBox="0 0 65 65" width="32px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <path d="M50.837,48.137V36.425c0-6.275-3.35-9.195-7.816-9.195  c-3.604,0-5.219,1.983-6.119,3.374V27.71h-6.79c0.09,1.917,0,20.427,0,20.427h6.79V36.729c0-0.609,0.044-1.219,0.224-1.655  c0.49-1.22,1.607-2.483,3.482-2.483c2.458,0,3.44,1.873,3.44,4.618v10.929H50.837z M22.959,24.922c2.367,0,3.842-1.57,3.842-3.531  c-0.044-2.003-1.475-3.528-3.797-3.528s-3.841,1.524-3.841,3.528c0,1.961,1.474,3.531,3.753,3.531H22.959z M34,64  C17.432,64,4,50.568,4,34C4,17.431,17.432,4,34,4s30,13.431,30,30C64,50.568,50.568,64,34,64z M26.354,48.137V27.71h-6.789v20.427  H26.354z" style="fill-rule:evenodd;clip-rule:evenodd;fill:;"/>
+</svg>
+
+    </a>
+  </div>
+
+
+      <h1 class="f1 athelas mt3 mb1">【源码学习】JDK7 ConcurrentHashMap</h1>
+      
+      
+      <time class="f6 mv4 dib tracked" datetime="2018-06-04T00:00:00Z">June 4, 2018</time>
+
+      
+      
+    </header>
+    <div class="nested-copy-line-height lh-copy serif f4 nested-links nested-img mid-gray pr4-l w-two-thirds-l"><h2 id="认识">认识</h2>
+<p>HashMap 是采用「数组 + 链表」的方式进行数据的存储，而在 ConcurrentHashMap 中则划分了若干个 Segment，每个 Segment 中存储一个散列表。<strong>ConcurrentHashMap 可以看作是一个具有二级结构的 HashMap</strong>。</p>
+<p><img src="https://blog-pankekp-image.oss-cn-beijing.aliyuncs.com/2018-06/2018_06_04_structure.jpg" alt="structure"></p>
+<p>JDK7 的 HashMap 在并发情况下存在安全问题，虽然 HashTable 及 Collections.synchronizedMap(hashMap) 是线程安全的，但是这两种方式都是对整个 Map 加锁，在并发量大的情况下十分影响性能。ConcurrentHashMap 引入了分段锁机制，能够分别对每个 Segment 加锁，在并发读写情况下每个 Segment 互不影响。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Segment</span><span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">extends</span> ReentrantLock <span style="color:#66d9ef">implements</span> Serializable <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">private</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">long</span> serialVersionUID <span style="color:#f92672">=</span> 2249069246763182397L<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">float</span> loadFactor<span style="color:#f92672">;</span>
+    Segment<span style="color:#f92672">(</span><span style="color:#66d9ef">float</span> lf<span style="color:#f92672">)</span> <span style="color:#f92672">{</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">loadFactor</span> <span style="color:#f92672">=</span> lf<span style="color:#f92672">;</span> <span style="color:#f92672">}</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>可以看到，Segment 继承了 ReentrantLock，它本质上就是一个可重入锁，所以这种结构相比 HashMap 能够避免并发问题。</p>
+<h2 id="关键成员属性">关键成员属性</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#75715e">// 整个map的默认初始容量
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> DEFAULT_INITIAL_CAPACITY <span style="color:#f92672">=</span> 16<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// HashEntry数组的扩容因子
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">float</span> DEFAULT_LOAD_FACTOR <span style="color:#f92672">=</span> 0<span style="color:#f92672">.</span><span style="color:#a6e22e">75f</span><span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// 并发度，也就是segment数组的长度
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> DEFAULT_CONCURRENCY_LEVEL <span style="color:#f92672">=</span> 16<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// size()中尝试获取锁的次数
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> RETRIES_BEFORE_LOCK <span style="color:#f92672">=</span> 2<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// scanAndLockForPut()中尝试获取锁的次数，单核为1，多核为64
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> MAX_SCAN_RETRIES <span style="color:#f92672">=</span> Runtime<span style="color:#f92672">.</span><span style="color:#a6e22e">getRuntime</span><span style="color:#f92672">().</span><span style="color:#a6e22e">availableProcessors</span><span style="color:#f92672">()</span> <span style="color:#f92672">&gt;</span> 1 <span style="color:#f92672">?</span> 64 <span style="color:#f92672">:</span> 1<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// segment 掩码
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> segmentMask<span style="color:#f92672">;</span>
+
+<span style="color:#75715e">// segment 寻址偏移量
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">final</span> <span style="color:#66d9ef">int</span> segmentShift<span style="color:#f92672">;</span>
+</code></pre></div><p>其余属性与hashmap类似。</p>
+<h2 id="构造方法">构造方法</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#a6e22e">ConcurrentHashMap</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> initialCapacity<span style="color:#f92672">,</span> <span style="color:#66d9ef">float</span> loadFactor<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> concurrencyLevel<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!(</span>loadFactor <span style="color:#f92672">&gt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">||</span> initialCapacity <span style="color:#f92672">&lt;</span> 0 <span style="color:#f92672">||</span> concurrencyLevel <span style="color:#f92672">&lt;=</span> 0<span style="color:#f92672">)</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> IllegalArgumentException<span style="color:#f92672">();</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>concurrencyLevel <span style="color:#f92672">&gt;</span> MAX_SEGMENTS<span style="color:#f92672">)</span>
+        concurrencyLevel <span style="color:#f92672">=</span> MAX_SEGMENTS<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// Find power-of-two sizes best matching arguments
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> sshift <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">int</span> ssize <span style="color:#f92672">=</span> 1<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 根据并发等级确定数组长度，长度不可变，且2^sshift=ssize
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span>ssize <span style="color:#f92672">&lt;</span> concurrencyLevel<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#f92672">++</span>sshift<span style="color:#f92672">;</span>
+        ssize <span style="color:#f92672">&lt;&lt;=</span> 1<span style="color:#f92672">;</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#75715e">// 根据默认值算出segmentShift=28，segmentMask=15
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">segmentShift</span> <span style="color:#f92672">=</span> 32 <span style="color:#f92672">-</span> sshift<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">segmentMask</span> <span style="color:#f92672">=</span> ssize <span style="color:#f92672">-</span> 1<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 这里initialCapacity指整个map的初始大小
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>initialCapacity <span style="color:#f92672">&gt;</span> MAXIMUM_CAPACITY<span style="color:#f92672">)</span>
+        initialCapacity <span style="color:#f92672">=</span> MAXIMUM_CAPACITY<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 计算一个segment的容量
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> c <span style="color:#f92672">=</span> initialCapacity <span style="color:#f92672">/</span> ssize<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>c <span style="color:#f92672">*</span> ssize <span style="color:#f92672">&lt;</span> initialCapacity<span style="color:#f92672">)</span>
+        <span style="color:#f92672">++</span>c<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 最小容量为2，这样根据0.75的扩容因子，插入第一个元素不会扩容，插入第二个才会扩容
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> cap <span style="color:#f92672">=</span> MIN_SEGMENT_TABLE_CAPACITY<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">while</span> <span style="color:#f92672">(</span>cap <span style="color:#f92672">&lt;</span> c<span style="color:#f92672">)</span>
+        cap <span style="color:#f92672">&lt;&lt;=</span> 1<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// create segments and segments[0]
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 创建第一个segment对象，以后创建segment均以此为原型
+</span><span style="color:#75715e"></span>    Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> s0 <span style="color:#f92672">=</span>
+        <span style="color:#66d9ef">new</span> Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;(</span>loadFactor<span style="color:#f92672">,</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span><span style="color:#f92672">)(</span>cap <span style="color:#f92672">*</span> loadFactor<span style="color:#f92672">),</span>
+                            <span style="color:#f92672">(</span>HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[])</span><span style="color:#66d9ef">new</span> HashEntry<span style="color:#f92672">[</span>cap<span style="color:#f92672">]);</span>
+    Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> ss <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[])</span><span style="color:#66d9ef">new</span> Segment<span style="color:#f92672">[</span>ssize<span style="color:#f92672">];</span>
+    <span style="color:#75715e">// 将s0放到ss[SBASE]处，即ss[0]
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// UNSAFE类内部使用CAS机制操作
+</span><span style="color:#75715e"></span>    UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">putOrderedObject</span><span style="color:#f92672">(</span>ss<span style="color:#f92672">,</span> SBASE<span style="color:#f92672">,</span> s0<span style="color:#f92672">);</span> <span style="color:#75715e">// ordered write of segments[0]
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">segments</span> <span style="color:#f92672">=</span> ss<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>如果使用无参的构造方法初始化，那么初始化完成后：</p>
+<ul>
+<li>Segment 数组长度为 16，<strong>不支持扩容</strong></li>
+<li>只对 0 位置上的 Segment 进行了初始化，其他位置为 null</li>
+<li>每个 Segment 的默认大小为 2，负载因子为 1.5，所以插入第二个元素就会触发扩容</li>
+<li>此时 segmentShift 为 28，segmentMask 为 15</li>
+</ul>
+<h2 id="存放元素">存放元素</h2>
+<h3 id="concurrenthashmap-中的-put">ConcurrentHashMap 中的 put()</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> V <span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>K key<span style="color:#f92672">,</span> V value<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> s<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 不能存null值
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>value <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+        <span style="color:#66d9ef">throw</span> <span style="color:#66d9ef">new</span> NullPointerException<span style="color:#f92672">();</span>
+    <span style="color:#75715e">// 得到key的散列值
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> hash <span style="color:#f92672">=</span> hash<span style="color:#f92672">(</span>key<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// 仍旧是与hashmap类似，从key的散列值再得到索引
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 不过这里得到的是segment数组的索引，可以看作是一级索引
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>hash <span style="color:#f92672">&gt;&gt;&gt;</span> segmentShift<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> segmentMask<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 在构造方法中我们知道初始化阶段只初始化了segment[0]，其他位置为null
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>s <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObject</span>          <span style="color:#75715e">// nonvolatile; recheck
+</span><span style="color:#75715e"></span>            <span style="color:#f92672">(</span>segments<span style="color:#f92672">,</span> <span style="color:#f92672">(</span>j <span style="color:#f92672">&lt;&lt;</span> SSHIFT<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> SBASE<span style="color:#f92672">))</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#75715e">//  in ensureSegment
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// 所以当索引对应的位置内容为null时，需要创建此位置对应的segment
+</span><span style="color:#75715e"></span>        s <span style="color:#f92672">=</span> ensureSegment<span style="color:#f92672">(</span>j<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// 调用segmemt的put()进行插入操作
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">return</span> s<span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>key<span style="color:#f92672">,</span> hash<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">);</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这个方法是 ConcurrentHashMap 直接提供的用于进行插入操作的 API，逻辑很简单：</p>
+<ul>
+<li>通过 hash 值找到 Segment 数组的索引</li>
+<li>把 put 操作交给 Segment 的 put() 进行</li>
+</ul>
+<p><strong>关于 Segment 索引的获取</strong>：</p>
+<ul>
+<li>hash 码为 32 位，在构造方法中得到 segmentShift = 28 / segmentMask = 15</li>
+<li>将 hash 码无符号右移 28 位，也就是将高 4 位移动至低 4 位，再与 15 进行与操作</li>
+</ul>
+<p>其实与 HashMap 中 <code>hash &amp; (length - 1)</code> 而得到索引十分类似：假如不使用默认并发度 16，而改为 32，则 segmentShift = 27 / segmentMask = 31，这个 segmentShift 使得在 32 并发度下 hash 码右移后的值多了一位，而新的 segmentMask 值也刚好可以覆盖到 hash 值多了的一位。</p>
+<p>可以认为这种计算方式可以在并发度增加时，相应地增加 hash 码实际使用的有效位数，从而令 Segment 索引分配的均匀性与 Segment 数组长度始终相匹配。</p>
+<h3 id="ensuresegment">ensureSegment()</h3>
+<p>因为初始化容器后只有 Segment[0] 存在，其他位置都是 null，当 put() 中计算出的 Segment 索引不在 0 位置时，由这个方法来创建指定位置上的 Segment：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">ensureSegment</span><span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> k<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#66d9ef">final</span> Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> ss <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">segments</span><span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 计算getObjectVolatile用到的偏移量
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">long</span> u <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>k <span style="color:#f92672">&lt;&lt;</span> SSHIFT<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> SBASE<span style="color:#f92672">;</span> <span style="color:#75715e">// raw offset
+</span><span style="color:#75715e"></span>    Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> seg<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 第一次判断是否为null，注意这里的getObjectVolatile可以保证内存可见性
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>seg <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObjectVolatile</span><span style="color:#f92672">(</span>ss<span style="color:#f92672">,</span> u<span style="color:#f92672">))</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// 取到之前创建的segment
+</span><span style="color:#75715e"></span>        Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> proto <span style="color:#f92672">=</span> ss<span style="color:#f92672">[</span>0<span style="color:#f92672">];</span> <span style="color:#75715e">// use segment 0 as prototype
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">int</span> cap <span style="color:#f92672">=</span> proto<span style="color:#f92672">.</span><span style="color:#a6e22e">table</span><span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">float</span> lf <span style="color:#f92672">=</span> proto<span style="color:#f92672">.</span><span style="color:#a6e22e">loadFactor</span><span style="color:#f92672">;</span>
+        <span style="color:#66d9ef">int</span> threshold <span style="color:#f92672">=</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span><span style="color:#f92672">)(</span>cap <span style="color:#f92672">*</span> lf<span style="color:#f92672">);</span>
+        <span style="color:#75715e">// 创建HashEntry数组
+</span><span style="color:#75715e"></span>        HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> tab <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[])</span><span style="color:#66d9ef">new</span> HashEntry<span style="color:#f92672">[</span>cap<span style="color:#f92672">];</span>
+        <span style="color:#75715e">// 再次检查
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>seg <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObjectVolatile</span><span style="color:#f92672">(</span>ss<span style="color:#f92672">,</span> u<span style="color:#f92672">))</span>
+            <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span> <span style="color:#75715e">// recheck
+</span><span style="color:#75715e"></span>            Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> s <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;(</span>lf<span style="color:#f92672">,</span> threshold<span style="color:#f92672">,</span> tab<span style="color:#f92672">);</span>
+            <span style="color:#66d9ef">while</span> <span style="color:#f92672">((</span>seg <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObjectVolatile</span><span style="color:#f92672">(</span>ss<span style="color:#f92672">,</span> u<span style="color:#f92672">))</span>
+                    <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                <span style="color:#75715e">// 使用CAS的方式,当ss偏移u位置内存上的值为null，则替换为seg
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">compareAndSwapObject</span><span style="color:#f92672">(</span>ss<span style="color:#f92672">,</span> u<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">,</span> seg <span style="color:#f92672">=</span> s<span style="color:#f92672">))</span>
+                    <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> seg<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>因为 put() 是无锁的，所以 ensureSegment() 可能存在多个线程创建同一个位置 Segment 的情况，这里使用 CAS 来同步 Segment 的创建过程：</p>
+<ul>
+<li>第一次 if 判断：尝试在指定索引位置取segment对象，如果为 null 则使用之前 0 位置的 Segment 对象作为镜像创建当前位置的 Segment 对象</li>
+<li>第二次 if 判断：检查在创建当前位置 Segment 过程是否有其他线程已经创建过了此位置的 Segment</li>
+<li>while 循环：当 CAS 失败说明此位置的 Segment 已被其他线程创建，再次回到循环的判断处时就可以将 Segment 赋值给 seg，并跳出循环</li>
+</ul>
+<h3 id="segment-中的-put">Segment 中的 put()</h3>
+<p>这个方法就是实际存放元素的核心逻辑：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">final</span> V <span style="color:#a6e22e">put</span><span style="color:#f92672">(</span>K key<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> hash<span style="color:#f92672">,</span> V value<span style="color:#f92672">,</span> <span style="color:#66d9ef">boolean</span> onlyIfAbsent<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// 尝试获取此segment的锁
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 获取成功则新的节点置为null
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 否则就通过scanAndLockForPut()创建node，详见后文
+</span><span style="color:#75715e"></span>    HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> node <span style="color:#f92672">=</span> tryLock<span style="color:#f92672">()</span> <span style="color:#f92672">?</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">:</span>
+        scanAndLockForPut<span style="color:#f92672">(</span>key<span style="color:#f92672">,</span> hash<span style="color:#f92672">,</span> value<span style="color:#f92672">);</span>
+    V oldValue<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// segment内部的数组
+</span><span style="color:#75715e"></span>        HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> tab <span style="color:#f92672">=</span> table<span style="color:#f92672">;</span>
+        <span style="color:#75715e">// 获取索引
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">int</span> index <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>tab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span> <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> hash<span style="color:#f92672">;</span>
+        <span style="color:#75715e">// 获取HashEntry数组index处的链表的头节点指针
+</span><span style="color:#75715e"></span>        HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> first <span style="color:#f92672">=</span> entryAt<span style="color:#f92672">(</span>tab<span style="color:#f92672">,</span> index<span style="color:#f92672">);</span>
+        <span style="color:#75715e">// 遍历链表
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e <span style="color:#f92672">=</span> first<span style="color:#f92672">;;)</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// 若当前节点不为空
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                K k<span style="color:#f92672">;</span>
+                <span style="color:#75715e">// 判断是否key重复，注意这里的判断条件与hashmap中有一点不同
+</span><span style="color:#75715e"></span>                <span style="color:#75715e">// 我的理解是这里的索引已经是二级索引，冲突的可能性较低，所以没有先判断hash码
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span>
+                    <span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> hash <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">)))</span> <span style="color:#f92672">{</span>
+                    <span style="color:#75715e">// 重复则覆盖旧值
+</span><span style="color:#75715e"></span>                    oldValue <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span><span style="color:#f92672">;</span>
+                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(!</span>onlyIfAbsent<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                        e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span> <span style="color:#f92672">=</span> value<span style="color:#f92672">;</span>
+                        <span style="color:#f92672">++</span>modCount<span style="color:#f92672">;</span>
+                    <span style="color:#f92672">}</span>
+                    <span style="color:#75715e">// 插入操作结束，跳出循环
+</span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+                <span style="color:#f92672">}</span>
+                <span style="color:#75715e">// key不重复则继续遍历
+</span><span style="color:#75715e"></span>                e <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+            <span style="color:#75715e">// 若当前节点为空，说明没有重复的 key，已经遍历到链表尾；要么就是该位置没有元素
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">else</span> <span style="color:#f92672">{</span>
+                <span style="color:#75715e">// 如果通过scanAndLockForPut() 获得了node则将其插入链表头
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>node <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span>
+                    node<span style="color:#f92672">.</span><span style="color:#a6e22e">setNext</span><span style="color:#f92672">(</span>first<span style="color:#f92672">);</span>
+                <span style="color:#75715e">// 说明获取锁成功，现在新创建node节点
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">else</span>
+                    node <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;(</span>hash<span style="color:#f92672">,</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> first<span style="color:#f92672">);</span>
+                <span style="color:#66d9ef">int</span> c <span style="color:#f92672">=</span> count <span style="color:#f92672">+</span> 1<span style="color:#f92672">;</span>
+                <span style="color:#75715e">// 判断是否需要进行扩容
+</span><span style="color:#75715e"></span>                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>c <span style="color:#f92672">&gt;</span> threshold <span style="color:#f92672">&amp;&amp;</span> tab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span> <span style="color:#f92672">&lt;</span> MAXIMUM_CAPACITY<span style="color:#f92672">)</span>
+                    rehash<span style="color:#f92672">(</span>node<span style="color:#f92672">);</span>
+                <span style="color:#66d9ef">else</span>
+                    <span style="color:#75715e">// 将node放在链表头
+</span><span style="color:#75715e"></span>                    setEntryAt<span style="color:#f92672">(</span>tab<span style="color:#f92672">,</span> index<span style="color:#f92672">,</span> node<span style="color:#f92672">);</span>
+                <span style="color:#f92672">++</span>modCount<span style="color:#f92672">;</span>
+                count <span style="color:#f92672">=</span> c<span style="color:#f92672">;</span>
+                oldValue <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// 插入操作完成后必须释放本segment的锁
+</span><span style="color:#75715e"></span>        unlock<span style="color:#f92672">();</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> oldValue<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>Segment 中的 put() 有独占锁保护，所以操作并不复杂，与 HashMap 插入元素的逻辑类似：</p>
+<p><img src="https://blog-pankekp-image.oss-cn-beijing.aliyuncs.com/2018-06/2018_06_04_Segment_put%28%29.png" alt="segment put()"></p>
+<p>需要注意的是 node 在获取锁成功时赋值 null，个人理解是如果存在重复 key 那么直接替换 value 即可，将新建节点的操作延迟到真正需要插入新节点时，以节省性能。</p>
+<h3 id="scanandlockforput">scanAndLockForPut()</h3>
+<p>根据 Segment 中 put() 的逻辑可以看出，scanAndLockForPut() 的作用就是获取独占锁，并给 node 变量赋值：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">private</span> HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> <span style="color:#a6e22e">scanAndLockForPut</span><span style="color:#f92672">(</span>K key<span style="color:#f92672">,</span> <span style="color:#66d9ef">int</span> hash<span style="color:#f92672">,</span> V value<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> first <span style="color:#f92672">=</span> entryForHash<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> hash<span style="color:#f92672">);</span>
+    HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e <span style="color:#f92672">=</span> first<span style="color:#f92672">;</span>
+    HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> node <span style="color:#f92672">=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">int</span> retries <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>1<span style="color:#f92672">;</span> <span style="color:#75715e">// negative while locating node
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 循环获取锁
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">while</span> <span style="color:#f92672">(!</span>tryLock<span style="color:#f92672">())</span> <span style="color:#f92672">{</span>
+        HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> f<span style="color:#f92672">;</span> <span style="color:#75715e">// to recheck first below
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>retries <span style="color:#f92672">&lt;</span> 0<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// 若头结点为null并且node为null则新建node节点
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>e <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>node <span style="color:#f92672">==</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#75715e">// speculatively create node
+</span><span style="color:#75715e"></span>                    node <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;(</span>hash<span style="color:#f92672">,</span> key<span style="color:#f92672">,</span> value<span style="color:#f92672">,</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">);</span>
+                retries <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+            <span style="color:#f92672">}</span>
+            <span style="color:#75715e">// 如果发现存在重复的key，则标记retries为0，等待抢锁成功退出方法即可
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">))</span>
+                retries <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+            <span style="color:#66d9ef">else</span>
+                e <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#75715e">// 当尝试获取锁的次数达到一定次数后阻塞线程，直至获取锁
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(++</span>retries <span style="color:#f92672">&gt;</span> MAX_SCAN_RETRIES<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            lock<span style="color:#f92672">();</span>
+            <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+        <span style="color:#75715e">// 在「尝试偶数次」时判断当前 Segment 处链表头的节点是否是之前的值
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// 如果不是则说明有其他线程进行了插入操作（因为在 put() 中采用头插法插入节点）
+</span><span style="color:#75715e"></span>        <span style="color:#75715e">// 则重置 first 和 retries，重新进行 scanAndLockForPut()
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">else</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>retries <span style="color:#f92672">&amp;</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">==</span> 0 <span style="color:#f92672">&amp;&amp;</span>
+                    <span style="color:#f92672">(</span>f <span style="color:#f92672">=</span> entryForHash<span style="color:#f92672">(</span><span style="color:#66d9ef">this</span><span style="color:#f92672">,</span> hash<span style="color:#f92672">))</span> <span style="color:#f92672">!=</span> first<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            e <span style="color:#f92672">=</span> first <span style="color:#f92672">=</span> f<span style="color:#f92672">;</span> <span style="color:#75715e">// re-traverse if entry changed
+</span><span style="color:#75715e"></span>            retries <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>1<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> node<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>这个方法可以看作是一个自旋锁，在尝试获取锁一定次数后就会阻塞该线程直至获取锁。</p>
+<p>需要注意的是，最终返回的 node 可能不为 null，即当前位置没有链表，则新建 node 节点并返回，这个节点在外层的 put() 中直接会被插入链表头；也可能为 null，存在两种可能导致这种情况：</p>
+<ul>
+<li>第一次 tryLock() 就获取到锁，根本没有机会进入 while 中给 node 赋值</li>
+<li>当前位置已经有链表，而且找到了重复的 key，此时会直接将 retries 置 0，代表接下来只需要等待抢到锁就可以退出方法，此时 node 也为 null，这个逻辑正好呼应了外层 put() 的逻辑：因为外层会先进行重复 key 的查找，查找不到才有新建节点，而 scanAndLockForPut() 中此时已经确定存在重复 key，新建 node 就成了无意义的操作</li>
+</ul>
+<h2 id="get">get()</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> V <span style="color:#a6e22e">get</span><span style="color:#f92672">(</span>Object key<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+    Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> s<span style="color:#f92672">;</span> <span style="color:#75715e">// manually integrate access methods to reduce overhead
+</span><span style="color:#75715e"></span>    HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> tab<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 计算散列码，同put
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> h <span style="color:#f92672">=</span> hash<span style="color:#f92672">(</span>key<span style="color:#f92672">);</span>
+    <span style="color:#75715e">// 计算索引，与put类似
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">long</span> u <span style="color:#f92672">=</span> <span style="color:#f92672">(((</span>h <span style="color:#f92672">&gt;&gt;&gt;</span> segmentShift<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> segmentMask<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;&lt;</span> SSHIFT<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> SBASE<span style="color:#f92672">;</span>
+    <span style="color:#75715e">// 判断对应的segment与tab均不为null
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>s <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span>UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObjectVolatile</span><span style="color:#f92672">(</span>segments<span style="color:#f92672">,</span> u<span style="color:#f92672">))</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span> <span style="color:#f92672">&amp;&amp;</span>
+        <span style="color:#f92672">(</span>tab <span style="color:#f92672">=</span> s<span style="color:#f92672">.</span><span style="color:#a6e22e">table</span><span style="color:#f92672">)</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// 遍历HashEntry数组
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span>HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> e <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>HashEntry<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;)</span> UNSAFE<span style="color:#f92672">.</span><span style="color:#a6e22e">getObjectVolatile</span>
+                    <span style="color:#f92672">(</span>tab<span style="color:#f92672">,</span> <span style="color:#f92672">((</span><span style="color:#66d9ef">long</span><span style="color:#f92672">)(((</span>tab<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span> <span style="color:#f92672">-</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">&amp;</span> h<span style="color:#f92672">))</span> <span style="color:#f92672">&lt;&lt;</span> TSHIFT<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> TBASE<span style="color:#f92672">);</span>
+                e <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span> e <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">next</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            K k<span style="color:#f92672">;</span>
+            <span style="color:#75715e">// key相同则取其value即可
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">((</span>k <span style="color:#f92672">=</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">key</span><span style="color:#f92672">)</span> <span style="color:#f92672">==</span> key <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>e<span style="color:#f92672">.</span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">==</span> h <span style="color:#f92672">&amp;&amp;</span> key<span style="color:#f92672">.</span><span style="color:#a6e22e">equals</span><span style="color:#f92672">(</span>k<span style="color:#f92672">)))</span>
+                <span style="color:#66d9ef">return</span> e<span style="color:#f92672">.</span><span style="color:#a6e22e">value</span><span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>get() 的逻辑十分清晰：</p>
+<ol>
+<li>计算 hash，找到 Segment</li>
+<li>在 Segment 中找到对应的 HashEntry</li>
+<li>遍历链表</li>
+</ol>
+<p>需要注意的是，get 过程是不需要加锁的，因为 Segment 中的 table 是 volatile 的，対它的修改可以被其他线程立即可见。</p>
+<p>另外，<strong>ConcurrentHashMap 只能保证单次操作是线程安全的</strong>，但是如果一个线程里进行多个操作，则无法保证线程安全：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">main</span><span style="color:#f92672">(</span>String<span style="color:#f92672">[]</span> args<span style="color:#f92672">)</span> <span style="color:#66d9ef">throws</span> InterruptedException <span style="color:#f92672">{</span>
+    ConcurrentHashMap<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span> Integer<span style="color:#f92672">&gt;</span> map <span style="color:#f92672">=</span> <span style="color:#66d9ef">new</span> ConcurrentHashMap<span style="color:#f92672">&lt;</span>String<span style="color:#f92672">,</span>Integer<span style="color:#f92672">&gt;();</span>
+    map<span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;key&#34;</span><span style="color:#f92672">,</span> 1<span style="color:#f92672">);</span>
+    ExecutorService executorService <span style="color:#f92672">=</span> Executors<span style="color:#f92672">.</span><span style="color:#a6e22e">newFixedThreadPool</span><span style="color:#f92672">(</span>100<span style="color:#f92672">);</span>
+    <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> i <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> i <span style="color:#f92672">&lt;</span> 1000<span style="color:#f92672">;</span> i<span style="color:#f92672">++)</span> <span style="color:#f92672">{</span>
+        executorService<span style="color:#f92672">.</span><span style="color:#a6e22e">execute</span><span style="color:#f92672">(</span><span style="color:#66d9ef">new</span> Runnable<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+            <span style="color:#a6e22e">@Override</span>
+            <span style="color:#66d9ef">public</span> <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">run</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">int</span> value <span style="color:#f92672">=</span> map<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;key&#34;</span><span style="color:#f92672">)</span> <span style="color:#f92672">+</span> 1<span style="color:#f92672">;</span>
+                map<span style="color:#f92672">.</span><span style="color:#a6e22e">put</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;key&#34;</span><span style="color:#f92672">,</span> value<span style="color:#f92672">);</span>
+            <span style="color:#f92672">}</span>
+        <span style="color:#f92672">});</span>
+    <span style="color:#f92672">}</span>
+    System<span style="color:#f92672">.</span><span style="color:#a6e22e">out</span><span style="color:#f92672">.</span><span style="color:#a6e22e">println</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;------&#34;</span> <span style="color:#f92672">+</span> map<span style="color:#f92672">.</span><span style="color:#a6e22e">get</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;key&#34;</span><span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;------&#34;</span><span style="color:#f92672">);</span>
+    executorService<span style="color:#f92672">.</span><span style="color:#a6e22e">shutdown</span><span style="color:#f92672">();</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>上述代码的执行结果不一定是 1001，因为 get 不加锁，在一个线程拿到 value 但还未加 1 时，其他线程也可能拿到这个值，导致类加不到 1001 的情况，解决的方法是使用原子类或加锁。</p>
+<h2 id="size">size()</h2>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-java" data-lang="java"><span style="color:#66d9ef">public</span> <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">size</span><span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+    <span style="color:#75715e">// Try a few times to get accurate count. On failure due to
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// continuous async changes in table, resort to locking.
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">final</span> Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;[]</span> segments <span style="color:#f92672">=</span> <span style="color:#66d9ef">this</span><span style="color:#f92672">.</span><span style="color:#a6e22e">segments</span><span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">int</span> size<span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">boolean</span> overflow<span style="color:#f92672">;</span> <span style="color:#75715e">// true if size overflows 32 bits
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">long</span> sum<span style="color:#f92672">;</span>         <span style="color:#75715e">// sum of modCounts
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">long</span> last <span style="color:#f92672">=</span> 0L<span style="color:#f92672">;</span>   <span style="color:#75715e">// previous sum
+</span><span style="color:#75715e"></span>    <span style="color:#75715e">// 这里的retries变量与自旋锁方法中的类似
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> retries <span style="color:#f92672">=</span> <span style="color:#f92672">-</span>1<span style="color:#f92672">;</span> <span style="color:#75715e">// first iteration isn&#39;t retry
+</span><span style="color:#75715e"></span>    <span style="color:#66d9ef">try</span> <span style="color:#f92672">{</span>
+        <span style="color:#66d9ef">for</span> <span style="color:#f92672">(;;)</span> <span style="color:#f92672">{</span>
+            <span style="color:#75715e">// 如果尝试次数达到默认值则强制对所有segment加锁
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>retries<span style="color:#f92672">++</span> <span style="color:#f92672">==</span> RETRIES_BEFORE_LOCK<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> j <span style="color:#f92672">&lt;</span> segments<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span> <span style="color:#f92672">++</span>j<span style="color:#f92672">)</span>
+                    ensureSegment<span style="color:#f92672">(</span>j<span style="color:#f92672">).</span><span style="color:#a6e22e">lock</span><span style="color:#f92672">();</span> <span style="color:#75715e">// force creation
+</span><span style="color:#75715e"></span>            <span style="color:#f92672">}</span>
+            sum <span style="color:#f92672">=</span> 0L<span style="color:#f92672">;</span>
+            size <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span>
+            overflow <span style="color:#f92672">=</span> <span style="color:#66d9ef">false</span><span style="color:#f92672">;</span>
+            <span style="color:#75715e">// 遍历segment数组，累加segment的修改次数与内部元素的数量
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> j <span style="color:#f92672">&lt;</span> segments<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span> <span style="color:#f92672">++</span>j<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                Segment<span style="color:#f92672">&lt;</span>K<span style="color:#f92672">,</span>V<span style="color:#f92672">&gt;</span> seg <span style="color:#f92672">=</span> segmentAt<span style="color:#f92672">(</span>segments<span style="color:#f92672">,</span> j<span style="color:#f92672">);</span>
+                <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>seg <span style="color:#f92672">!=</span> <span style="color:#66d9ef">null</span><span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+                    sum <span style="color:#f92672">+=</span> seg<span style="color:#f92672">.</span><span style="color:#a6e22e">modCount</span><span style="color:#f92672">;</span>
+                    <span style="color:#66d9ef">int</span> c <span style="color:#f92672">=</span> seg<span style="color:#f92672">.</span><span style="color:#a6e22e">count</span><span style="color:#f92672">;</span>
+                    <span style="color:#75715e">// 如果超过int类型的最大值会变为负数
+</span><span style="color:#75715e"></span>                    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>c <span style="color:#f92672">&lt;</span> 0 <span style="color:#f92672">||</span> <span style="color:#f92672">(</span>size <span style="color:#f92672">+=</span> c<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;</span> 0<span style="color:#f92672">)</span>
+                        overflow <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span><span style="color:#f92672">;</span>
+                <span style="color:#f92672">}</span>
+            <span style="color:#f92672">}</span>
+            <span style="color:#75715e">// 如果本次计数得到的总修改次数与上一次相同，则计数结束
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>sum <span style="color:#f92672">==</span> last<span style="color:#f92672">)</span>
+                <span style="color:#66d9ef">break</span><span style="color:#f92672">;</span>
+            <span style="color:#75715e">// 将本次计数得到的总修改次数保存在last中以便下一次使用
+</span><span style="color:#75715e"></span>            last <span style="color:#f92672">=</span> sum<span style="color:#f92672">;</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span> <span style="color:#66d9ef">finally</span> <span style="color:#f92672">{</span>
+        <span style="color:#75715e">// 强制加锁并再次计数后必须释放锁
+</span><span style="color:#75715e"></span>        <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>retries <span style="color:#f92672">&gt;</span> RETRIES_BEFORE_LOCK<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+            <span style="color:#66d9ef">for</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">int</span> j <span style="color:#f92672">=</span> 0<span style="color:#f92672">;</span> j <span style="color:#f92672">&lt;</span> segments<span style="color:#f92672">.</span><span style="color:#a6e22e">length</span><span style="color:#f92672">;</span> <span style="color:#f92672">++</span>j<span style="color:#f92672">)</span>
+                segmentAt<span style="color:#f92672">(</span>segments<span style="color:#f92672">,</span> j<span style="color:#f92672">).</span><span style="color:#a6e22e">unlock</span><span style="color:#f92672">();</span>
+        <span style="color:#f92672">}</span>
+    <span style="color:#f92672">}</span>
+    <span style="color:#66d9ef">return</span> overflow <span style="color:#f92672">?</span> Integer<span style="color:#f92672">.</span><span style="color:#a6e22e">MAX_VALUE</span> <span style="color:#f92672">:</span> size<span style="color:#f92672">;</span>
+<span style="color:#f92672">}</span>
+</code></pre></div><p>size() 是一个跨 Segment 操作，所以避免不了锁的获取，但是直接全部加锁对性能会有较大影响，所以采用了类似自旋锁的操作：</p>
+<ul>
+<li>为了不直接锁住所有segment，认为计数过程中不会有别的线程进行修改</li>
+<li>在遍历 Segment 的过程中记录 Segment 被修改的次数，然后判断本次计数中得到的修改次数是否以上一次相同</li>
+<li>当尝试一定次数后发现仍有其他线程进行修改，则対所有 Segment 加锁</li>
+</ul>
+<ul class="pa0">
+  
+</ul>
+<div class="mt6 instapaper_ignoref">
+      
+      
+      </div>
+    </div>
+
+    <aside class="w-30-l mt6-l">
+
+
+
+
+</aside>
+
+  </article>
+
+    </main>
+    <footer class="bg-black bottom-0 w-100 pa3" role="contentinfo">
+  <div class="flex justify-between">
+  <a class="f4 fw4 hover-white no-underline white-70 dn dib-ns pv2 ph3" href="http://example.org/" >
+    &copy;  碎碎念回收站 2020 
+  </a>
+    <div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</div>
+  </div>
+</footer>
+
+    
+
+  <script src="/dist/js/app.3fc0f988d21662902933.js"></script>
+
+
+  </body>
+</html>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on 碎碎念回收站</title>
+    <link>http://example.org/posts/</link>
+    <description>Recent content in Posts on 碎碎念回收站</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 30 Sep 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>【源码学习】AQS 独占模式</title>
+      <link>http://example.org/posts/aqs/</link>
+      <pubDate>Mon, 30 Sep 2019 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/aqs/</guid>
+      <description>认识 AbstractQueuedSynchronizer 是一个抽象类，它封装了各种同步机制的底层细节，显式锁 ReentrantLock 就是基于 AQS 实现的。它也可以用来定义自己的同步工具，只需要继承这个类并重写一些它的方法即可。
+synchronized 是被封装在 JVM 中的，与操作系统相关，并非由 JDK 实现，而 AQS 则完全是由 Java 代码实现，比其他使用系统底层的实现不知道高到哪里去了。
+独占模式 &amp;amp; 共享模式 AQS 中维护了一个 state 属性，由 volatile 修饰，用来表示线程的同步状态，关于这个属性的几个方法都是 protected 和 final 的，也就是说只能在子类中使用而且不允许被重写。通过设置 state 属性来实现多线程的独占模式或共享模式：
+独占模式：
+ state 初始值为 0 线程需要进行独占操作前判断 state：  如果是 0，则将 state 置 1，该线程进行操作。先判断再操作的过程使用的就是 CAS 机制 如果是 1，就表示其他线程正在进行独占操作，本线程阻塞   获取独占状态成功的线程执行完毕后需要释放同步状态，将 state 置 0  共享模式：
+ 与独占模式类似，state 的值表示允许存在这么多个线程同时执行 每一个进入共享模式的线程将 state 减 1 如果 state 的值不大于 0 则该线程需要阻塞等待 释放同步状态则将 state 加 1  JDK 下竞争同步状态的实现 基于同步状态，就可以将「获取同步状态」和「释放同步状态」这两种操作进行抽取，以这两种操作为基础，就可以定义各种并发工具。</description>
+    </item>
+    
+    <item>
+      <title>【Java 基础】使用命令编译简单的 Java 项目</title>
+      <link>http://example.org/posts/compile/</link>
+      <pubDate>Sun, 18 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/compile/</guid>
+      <description>CLASSPATH classpath 可以理解为 java 程序在编译或运行时需要用到的其他 class 文件或 jar 包及配置文件的路径。
+JDK1.5 之后就不用再配置者个环境变量，JRE 会自动搜索当前路径下的 class 文件，自动加载 dt.jar 和 tools.jar。
+如果手动地在命令行下进行编译和运行时，根据项目结构，可以使用 -classpath 指定具体的目录。
+项目结构  src：存放源码，分为两个包：hello 和 hi，Test 属于 hi 包，作为启动入口 target：编译后 class 文件的位置 lib：Test 中引入的第三方 jar 包 resource：第三方 jar 包需要的配置文件  Hello.java
+package hello; public class Hello{ public void hello(){ System.out.println(&amp;#34;hello&amp;#34;); } } Hi.java
+package hi; public class Hi{ public void hi(){ System.out.println(&amp;#34;hi&amp;#34;); } } Test.java
+package hi; import hello.*; import org.slf4j.*; public class Test{ private static Logger logger = LoggerFactory.</description>
+    </item>
+    
+    <item>
+      <title>【源码学习】JDK8 ConcurrentHashMap</title>
+      <link>http://example.org/posts/cocurrenthashmap_2/</link>
+      <pubDate>Mon, 18 Jun 2018 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/cocurrenthashmap_2/</guid>
+      <description>认识 与 JDK7 相比舍弃了复杂的分段锁机制，所有的并发安全均由synchronized 与 CAS 机制保证，在存储结构上延续了 JDK8 HashMap 的「链表 + 红黑树」的结构。
+关键属性 // 最大容量 private static final int MAXIMUM_CAPACITY = 1 &amp;lt;&amp;lt; 30; // 默认容量，与hashmap相同 private static final int DEFAULT_CAPACITY = 16; // 默认并发等级 private static final int DEFAULT_CONCURRENCY_LEVEL = 16; // 扩容因子，不再赘述 private static final float LOAD_FACTOR = 0.75f; // 链表转化为红黑树的阈值 static final int TREEIFY_THRESHOLD = 8; // 红黑树最小容量 static final int MIN_TREEIFY_CAPACITY = 64; // 重要属性，扩容校验码位数，详见后文 private static int RESIZE_STAMP_BITS = 16; // 参与扩容的最大线程数 private static final int MAX_RESIZERS = (1 &amp;lt;&amp;lt; (32 - RESIZE_STAMP_BITS)) - 1; // 扩容校验码移位数，详见后文 private static final int RESIZE_STAMP_SHIFT = 32 - RESIZE_STAMP_BITS; // 重要属性，表示此节点正在扩容中，hash值为-1 static final int MOVED = -1; // hash for forwarding nodes  // node数组 transient volatile Node&amp;lt;K,V&amp;gt;[] table; // 扩容后的数组 private transient volatile Node&amp;lt;K,V&amp;gt;[] nextTable; // 十分重要的属性，详解后文 private transient volatile int sizeCtl; // 重要属性，并发扩容索引，详见后文 private transient volatile int transferIndex; sizeCtl 是保证并发安全最重要一个属性，被标记为 volitale，以CAS 方式来对其设值。不同状态下此属性不同的值有不同的意义，在此处先一并列出，便于后文参考：</description>
+    </item>
+    
+    <item>
+      <title>【源码学习】JDK8 HashMap</title>
+      <link>http://example.org/posts/hashmap_2/</link>
+      <pubDate>Mon, 11 Jun 2018 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/hashmap_2/</guid>
+      <description>认识 JDK8 中的 HashMap 相比 JDK7 中的改进主要集中于三个方面：
+ 链表长度在达到 8 时会转变为红黑树 対扩容后 rehash 过程进行了优化 hash 冲突时原本使用的头插法改为尾插法  hash() static final int hash(Object key) { int h; return (key == null) ? 0 : (h = key.hashCode()) ^ (h &amp;gt;&amp;gt;&amp;gt; 16); } 相较于 JDK7 中的 hash 算法略有简化，优化了高位算法，提升了计算速度，尽量保证让散列码的高低位都参与运算。使用异或比使用与和或能使结果更均匀，与的结果会向 0 靠拢，而或的结果会向 1 靠拢
+put() public V put(K key, V value) { return putVal(hash(key), key, value, false, true); } final V putVal(int hash, K key, V value, boolean onlyIfAbsent, boolean evict) { Node&amp;lt;K,V&amp;gt;[] tab; Node&amp;lt;K,V&amp;gt; p; int n, i; // 第一次put操作时会触发下面的初始化操作  if ((tab = table) == null || (n = tab.</description>
+    </item>
+    
+    <item>
+      <title>【源码学习】JDK7 ConcurrentHashMap</title>
+      <link>http://example.org/posts/cocurrenthashmap_1/</link>
+      <pubDate>Mon, 04 Jun 2018 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/cocurrenthashmap_1/</guid>
+      <description>认识 HashMap 是采用「数组 + 链表」的方式进行数据的存储，而在 ConcurrentHashMap 中则划分了若干个 Segment，每个 Segment 中存储一个散列表。ConcurrentHashMap 可以看作是一个具有二级结构的 HashMap。
+JDK7 的 HashMap 在并发情况下存在安全问题，虽然 HashTable 及 Collections.synchronizedMap(hashMap) 是线程安全的，但是这两种方式都是对整个 Map 加锁，在并发量大的情况下十分影响性能。ConcurrentHashMap 引入了分段锁机制，能够分别对每个 Segment 加锁，在并发读写情况下每个 Segment 互不影响。
+static class Segment&amp;lt;K,V&amp;gt; extends ReentrantLock implements Serializable { private static final long serialVersionUID = 2249069246763182397L; final float loadFactor; Segment(float lf) { this.loadFactor = lf; } } 可以看到，Segment 继承了 ReentrantLock，它本质上就是一个可重入锁，所以这种结构相比 HashMap 能够避免并发问题。
+关键成员属性 // 整个map的默认初始容量 static final int DEFAULT_INITIAL_CAPACITY = 16; // HashEntry数组的扩容因子 static final float DEFAULT_LOAD_FACTOR = 0.</description>
+    </item>
+    
+    <item>
+      <title>【源码学习】JDK7 HashMap</title>
+      <link>http://example.org/posts/hashmap_1/</link>
+      <pubDate>Wed, 30 May 2018 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/posts/hashmap_1/</guid>
+      <description>关键成员属性 static final int DEFAULT_INITIAL_CAPACITY = 1 &amp;lt;&amp;lt; 4; // 默认初始大小：16  static final float DEFAULT_LOAD_FACTOR = 0.75f; // 扩容因子  static final Entry&amp;lt;?,?&amp;gt;[] EMPTY_TABLE = {}; // HashMap实际就是一个Entry数组  transient Entry&amp;lt;K,V&amp;gt;[] table = (Entry&amp;lt;K,V&amp;gt;[]) EMPTY_TABLE; // HashMap实际存储的数据类型  Entry 数据结构
+static class Entry&amp;lt;K,V&amp;gt; implements Map.Entry&amp;lt;K,V&amp;gt; { final K key; V value; Entry&amp;lt;K,V&amp;gt; next; int hash; Entry(int h, K k, V v, Entry&amp;lt;K,V&amp;gt; n) { value = v; next = n; key = k; hash = h; } }  Entry 作为静态内部类实现了 Map 接口中的内部接口 Entry Entry 呈链表结构，其中 next 属性为指向下一个节点的指针，而成员属性中的 table 即是由 Entry 构成的数组，也就是说 HashMap 的内部存储结构为「数组 + 链表」的形式，同时使用拉链法处理 hash 冲突 由 Entry 的构造方法可以看出，Entry 链表插入元素时采用头插法，这么做是因为头插法相比尾插法要快很多  初始化 HashMap 不会直接使用传入的值作为初始容量，而是会使用比传入值大的 2 次幂作为初始容量。而在已知存放的元素个数时，推荐使用此公式得到传入的初始容量：</description>
+    </item>
+    
+  </channel>
+</rss>
